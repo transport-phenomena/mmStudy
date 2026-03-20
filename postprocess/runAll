@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+shopt -s nullglob
+python_scripts=("$script_dir"/*.py)
+
+if [ "${#python_scripts[@]}" -eq 0 ]; then
+    echo "No Python scripts found in $script_dir"
+    exit 0
+fi
+
+for script_path in "${python_scripts[@]}"; do
+    echo "Running $(basename "$script_path")"
+    python3 "$script_path"
+done

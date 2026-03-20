@@ -1,0 +1,16 @@
+# macOS and editor files
+.DS_Store
+.vscode/
+
+# Build outputs
+/build/
+/bin/
+
+# Local plotting caches and generated artifacts
+/postprocess/*
+
+# Keep source code and postprocess scripts tracked
+!/src/
+!/include/
+!/postprocess/*.py
+!/postprocess/runAll
