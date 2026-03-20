@@ -9,7 +9,7 @@ make release
 ## Run instructions
 
 ```bash
-./bin/main_release
+./bin/mmStudy_release
 ```
 
 ## Postproces
