@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
 import csv
+import os
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+os.environ.setdefault("MPLCONFIGDIR", str(SCRIPT_DIR / ".mplconfig"))
 
 import matplotlib
 
@@ -11,6 +15,7 @@ import matplotlib.pyplot as plt
 def load_results(csv_path: Path) -> dict[str, list[float]]:
     columns = {
         "volumeFraction": [],
+        "residualPair": [],
         "residual2": [],
         "residual3": [],
         "residual4": [],
@@ -21,6 +26,7 @@ def load_results(csv_path: Path) -> dict[str, list[float]]:
         reader = csv.DictReader(csv_file)
         for row in reader:
             columns["volumeFraction"].append(float(row["volumeFraction"]))
+            columns["residualPair"].append(float(row["residualPair"]))
             columns["residual2"].append(float(row["residual2"]))
             columns["residual3"].append(float(row["residual3"]))
             columns["residual4"].append(float(row["residual4"]))
@@ -30,13 +36,13 @@ def load_results(csv_path: Path) -> dict[str, list[float]]:
 
 
 def main() -> None:
-    project_root = Path(__file__).resolve().parent
-    csv_path = project_root / "results.csv"
-    pdf_path = project_root / "results_plot.pdf"
+    csv_path = SCRIPT_DIR / "results.csv"
+    pdf_path = SCRIPT_DIR / "results_plot.pdf"
 
     data = load_results(csv_path)
 
     fig, ax = plt.subplots(figsize=(8, 5.5))
+    ax.scatter(data["volumeFraction"], data["residualPair"], s=12, label="|| M^-1 - R_pair ||")
     ax.scatter(data["volumeFraction"], data["residual2"], s=12, label="|| M^-1 - (I9 - K)||")
     ax.scatter(data["volumeFraction"], data["residual3"], s=12, label="|| M^-1 - (I9 - K + K^2)||")
     ax.scatter(data["volumeFraction"], data["residual4"], s=12, label="|| M^-1 - (I9 - K + K^2 - K^3)||")

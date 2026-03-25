@@ -7,23 +7,30 @@ int main() {
     const char* outputPath = "postprocess/results.csv";
     std::ofstream outputFile(outputPath);
 
+
+//    testModel(4,1000.0,particleDiameter);
+
+    for (std::size_t nParticles = 2; nParticles <= 100; ++nParticles) {
+        measureCPUtime(nParticles,1000.0,particleDiameter);
+    }
+
     if (!outputFile) {
         std::cerr << "Failed to open " << outputPath << " for writing."
                   << std::endl;
         return 1;
     }
 
-    outputFile << "nParticles,r,volumeFraction,residual2,residual3,residual4,"
+    outputFile << "nParticles,r,volumeFraction,residualPair,residual1,residual2,residual3,residual4,"
                   "residual5\n";
 
     for (std::size_t nParticles = 2; nParticles <= 100; ++nParticles) {
-        for (int r = 10; r <= 1000; r += 10) {
+        for (int r = 10; r <= 100; r += 10) {
             const ModelResult result =
                 runModel(nParticles, static_cast<double>(r), particleDiameter);
 
             outputFile << nParticles << "," << r << "," << result.volumeFraction
-                       << "," << result.residual2 << "," << result.residual3
-                       << "," << result.residual4 << "," << result.residual5
+                       << "," << result.residualPair << "," << result.residual1 << "," << result.residual2
+                       << "," << result.residual3 << "," << result.residual4 << "," << result.residual5
                        << "\n";
         }
     }
