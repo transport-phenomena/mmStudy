@@ -7,10 +7,5 @@
 /bin/
 
 # Local plotting caches and generated artifacts
-/postprocess/*
+/results/*
 
-# Keep source code and postprocess scripts tracked
-!/src/
-!/include/
-!/postprocess/*.py
-!/postprocess/runAll

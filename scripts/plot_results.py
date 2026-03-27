@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+RESULT_DIR = SCRIPT_DIR.parent / "results"
 os.environ.setdefault("MPLCONFIGDIR", str(SCRIPT_DIR / ".mplconfig"))
 
 import matplotlib
@@ -36,23 +37,23 @@ def load_results(csv_path: Path) -> dict[str, list[float]]:
 
 
 def main() -> None:
-    csv_path = SCRIPT_DIR / "results.csv"
-    pdf_path = SCRIPT_DIR / "results_plot.pdf"
+    csv_path = RESULT_DIR / "results.csv"
+    pdf_path = RESULT_DIR / "results_plot.pdf"
 
     data = load_results(csv_path)
 
     fig, ax = plt.subplots(figsize=(8, 5.5))
-    ax.scatter(data["volumeFraction"], data["residualPair"], s=12, label="|| M^-1 - R_pair ||")
-    ax.scatter(data["volumeFraction"], data["residual2"], s=12, label="|| M^-1 - (I9 - K)||")
-    ax.scatter(data["volumeFraction"], data["residual3"], s=12, label="|| M^-1 - (I9 - K + K^2)||")
-    ax.scatter(data["volumeFraction"], data["residual4"], s=12, label="|| M^-1 - (I9 - K + K^2 - K^3)||")
-    ax.scatter(data["volumeFraction"], data["residual5"], s=12, label="|| M^-1 - (I9 - K + K^2 - K^3 + K^4)||")
+    ax.scatter(data["volumeFraction"], data["residualPair"], s=12, label="|| M^-1 - PRM ||")
+    ax.scatter(data["volumeFraction"], data["residual2"], s=12, label="|| M^-1 - (I - K)||")
+    ax.scatter(data["volumeFraction"], data["residual3"], s=12, label="|| M^-1 - (I - K + K^2)||")
+    ax.scatter(data["volumeFraction"], data["residual4"], s=12, label="|| M^-1 - (I - K + K^2 - K^3)||")
+    ax.scatter(data["volumeFraction"], data["residual5"], s=12, label="|| M^-1 - (I - K + K^2 - K^3 + K^4)||")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Volume Fraction")
-    ax.set_ylabel("Residual")
-    ax.set_title("Residuals vs Volume Fraction")
+    ax.set_xlabel("Volume fraction")
+    ax.set_ylabel("Residual norm")
+   # ax.set_title("Residuals vs Volume Fraction")
     ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
     ax.legend()
 

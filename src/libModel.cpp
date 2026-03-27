@@ -44,6 +44,35 @@ DenseMatrix createPairwiseModel(const std::vector<Vec3>& positions) {
     return pairwiseApproximation;
 }
 
+DenseMatrix createPairwiseModelTargetParticleOnly(const std::vector<Vec3>& positions) {
+    const std::size_t particleCount = positions.size();
+    const std::size_t matrixSize = 3 * particleCount;
+
+    DenseMatrix pairwiseApproximation = DenseMatrix::identity(matrixSize);
+    if (particleCount <= 1) {
+        return pairwiseApproximation;
+    }
+
+    for (std::size_t j = 1; j < particleCount; ++j) {
+        DenseMatrix pairMobility(0);
+        pairMobility.getMobilityMatrix({positions[0], positions[j]});
+        DenseMatrix pairResistance = pairMobility.invert();
+        const std::size_t idx0 = 0;
+        const std::size_t idxj = 3 * j;
+        for (std::size_t row = 0; row < 3; ++row) {
+            for (std::size_t col = 0; col < 3; ++col) {
+                const double identityEntry = row == col ? 1.0 : 0.0;
+                pairwiseApproximation(idx0 + row, idx0 + col) += pairResistance(row, col) - identityEntry;
+                pairwiseApproximation(idx0 + row, idxj + col) += pairResistance(row, 3 + col);
+            }
+        }
+    }
+
+
+    return pairwiseApproximation;
+}
+
+
 void testModel(std::size_t nParticles, double r, double particleDiameter) {
     Particles particles(nParticles, r, particleDiameter);
     DenseMatrix m = createPairwiseModel(particles.xyz);
@@ -53,7 +82,7 @@ void testModel(std::size_t nParticles, double r, double particleDiameter) {
 
 ModelResult runModel(std::size_t nParticles, double r, double particleDiameter) {
     const std::size_t n = 3 * nParticles;
-    constexpr std::size_t nRuns = 10;
+    constexpr std::size_t nRuns = 100;
 
     ModelResult averageResult{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
@@ -107,7 +136,7 @@ ModelResult runModel(std::size_t nParticles, double r, double particleDiameter) 
 
 void measureCPUtime(std::size_t nParticles, double r, double particleDiameter) {
     const std::size_t n = 3 * nParticles;
-    std::size_t nRuns = 10 * (101 - nParticles);
+    std::size_t nRuns = 1000;
     Particles particles(nParticles, r, particleDiameter);
 
     std::clock_t start = std::clock();
@@ -123,7 +152,7 @@ void measureCPUtime(std::size_t nParticles, double r, double particleDiameter) {
 
     start = std::clock();
     for (std::size_t run = 0; run < nRuns; ++run) {
-        DenseMatrix rmAproxPair = createPairwiseModel(particles.xyz);
+        DenseMatrix rmAproxPair = createPairwiseModelTargetParticleOnly(particles.xyz);
     }
     end = std::clock();
     double timePair = static_cast<double>(end - start) / CLOCKS_PER_SEC;
@@ -197,16 +226,16 @@ void measureCPUtime(std::size_t nParticles, double r, double particleDiameter) {
     end = std::clock();
     double timeMm1 = static_cast<double>(end - start) / CLOCKS_PER_SEC;  
 
-    std::ifstream existingFile("postprocess/cpuTime.csv");
+    std::ifstream existingFile("results/cpuTime.csv");
     const bool writeHeader = !existingFile.good() || existingFile.peek() == std::ifstream::traits_type::eof();
 
-    std::ofstream cpuTimeFile("postprocess/cpuTime.csv", std::ios::app);
+    std::ofstream cpuTimeFile("results/cpuTime.csv", std::ios::app);
     cpuTimeFile << std::scientific << std::uppercase;
     if (writeHeader) {
-        cpuTimeFile << "nParticles, I, Pairwise, I-K, I-K+K^2, I-K+K^2-K^3, I-K+K^2-K^3+K^4, M^-1" << std::endl;
+        cpuTimeFile << "nParticles, Stokes, PRM, I-K, I-K+K^2, I-K+K^2-K^3, I-K+K^2-K^3+K^4, M^-1" << std::endl;
     }
-    cpuTimeFile << nParticles << ", " << time1 << ", " << timePair << ", "
-                << time2 << ", " << time3 << ", " << time4 << ", " << time5
-                << ", " << timeMm1 << std::endl;
+    cpuTimeFile << nParticles << ", " << time1 << ", " << nParticles * timePair << ", "
+                << nParticles * time2 << ", " << nParticles * time3 << ", " << nParticles * time4 << ", " << nParticles * time5
+                << ", " << nParticles * timeMm1 << std::endl;
 
 }

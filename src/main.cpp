@@ -4,7 +4,7 @@
 
 int main() {
     constexpr double particleDiameter = 1.0;
-    const char* outputPath = "postprocess/results.csv";
+    const char* outputPath = "results/results.csv";
     std::ofstream outputFile(outputPath);
 
 

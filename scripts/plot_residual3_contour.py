@@ -34,9 +34,11 @@ def load_results(csv_path: Path) -> tuple[list[float], list[float], list[float]]
 
 
 def main() -> None:
-    project_root = Path(__file__).resolve().parent
-    csv_path = project_root / "results.csv"
-    output_path = project_root / "residual3_contour.pdf"
+    script_dir = Path(__file__).resolve().parent
+    result_dir = script_dir.parent / "results"
+
+    csv_path = result_dir / "results.csv"
+    output_path = result_dir / "residual3_contour.pdf"
 
     volume_fraction, n_particles, residual3 = load_results(csv_path)
     log_volume_fraction = np.log10(np.asarray(volume_fraction))

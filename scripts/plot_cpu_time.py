@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+RESULT_DIR = SCRIPT_DIR.parent / "results"
 os.environ.setdefault("MPLCONFIGDIR", str(SCRIPT_DIR / ".mplconfig"))
 
 import matplotlib
@@ -50,7 +51,6 @@ def plot_ratios(csv_path: Path, output_path: Path, show: bool) -> None:
 
     ax.set_xlabel("Number of particles")
     ax.set_ylabel("CPU time ratio to exact inverse (M^-1)")
-    ax.set_title("CPU Time Ratios Including Pairwise Model")
     ax.grid(True, alpha=0.3)
     ax.legend()
     fig.tight_layout()
@@ -71,14 +71,14 @@ def main() -> None:
     parser.add_argument(
         "--csv",
         type=Path,
-        default=SCRIPT_DIR / "cpuTime.csv",
+        default=RESULT_DIR / "cpuTime.csv",
         help="Path to cpuTime.csv",
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=SCRIPT_DIR / "cpuTime_ratios.png",
-        help="Output image path",
+        default=RESULT_DIR / "cpuTime_ratios.pdf",
+        help="Output figure path",
     )
     parser.add_argument(
         "--show",
