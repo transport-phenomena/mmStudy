@@ -24,6 +24,7 @@ public:
     DenseMatrix subtract(const DenseMatrix& other) const;
     DenseMatrix substract(const DenseMatrix& other) const;
     DenseMatrix multiply(const DenseMatrix& other) const;
+    double spectralNorm() const;
     std::size_t size() const;
     double operator()(std::size_t row, std::size_t col) const;
     double& operator()(std::size_t row, std::size_t col);

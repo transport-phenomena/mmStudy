@@ -5,6 +5,7 @@
 
 #include <ctime>
 #include <fstream>
+#include <string>
 
 DenseMatrix createPairwiseModel(const std::vector<Vec3>& positions) {
     const std::size_t particleCount = positions.size();
@@ -72,6 +73,22 @@ DenseMatrix createPairwiseModelTargetParticleOnly(const std::vector<Vec3>& posit
     return pairwiseApproximation;
 }
 
+void doSpectralNormStudy(std::size_t nParticles, double particleDiameter) {
+    
+    const std::string spectralNormOutputPath =
+        "results/spectralNorm_" + std::to_string(nParticles) + ".csv";
+    std::ofstream spectralNormFile(spectralNormOutputPath);
+    
+    spectralNormFile << "nParticles,r,volumeFraction,spectralNorm\n";
+    for (std::size_t i = 0; i <= 6000; i++) {
+        double r = 10.0 + static_cast<double>(i) / 10.0;
+        const KSpectralNormResult result =
+            getKSpectralNorm(nParticles, r, particleDiameter);
+        spectralNormFile << nParticles << "," << r << ","
+                         << result.volumeFraction << ","
+                         << result.spectralNorm << "\n";
+    }
+}
 
 void testModel(std::size_t nParticles, double r, double particleDiameter) {
     Particles particles(nParticles, r, particleDiameter);
@@ -79,10 +96,22 @@ void testModel(std::size_t nParticles, double r, double particleDiameter) {
     std::cout << m << std::endl;
 }
 
+KSpectralNormResult getKSpectralNorm(std::size_t nParticles, double r, double particleDiameter) {
+    const std::size_t n = 3 * nParticles;
+    Particles particles(nParticles, r, particleDiameter);
+    DenseMatrix mobilityMatrix(n);
+    mobilityMatrix.getMobilityMatrix(particles.xyz);
+    DenseMatrix Id = DenseMatrix::identity(n);
+    DenseMatrix K = mobilityMatrix.substract(Id);
+    const double sn = K.spectralNorm();
+    const double vf = particles.getVolumeFraction();
+
+    return {vf, sn};
+}
 
 ModelResult runModel(std::size_t nParticles, double r, double particleDiameter) {
     const std::size_t n = 3 * nParticles;
-    constexpr std::size_t nRuns = 100;
+    constexpr std::size_t nRuns = 1;
 
     ModelResult averageResult{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
@@ -94,7 +123,7 @@ ModelResult runModel(std::size_t nParticles, double r, double particleDiameter) 
         DenseMatrix resistanceMatrix = mobilityMatrix.invert();
 
         DenseMatrix Id = DenseMatrix::identity(n);
-        DenseMatrix K = mobilityMatrix.substract(Id);
+        DenseMatrix K = Id.substract(mobilityMatrix); //mobilityMatrix.substract(Id);
         DenseMatrix K2 = K.multiply(K);
         DenseMatrix K3 = K2.multiply(K);
         DenseMatrix K4 = K3.multiply(K);

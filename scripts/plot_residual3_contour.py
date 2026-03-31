@@ -18,6 +18,20 @@ import numpy as np
 import matplotlib.tri as tri
 
 
+def configure_plot_style() -> None:
+    plt.rcParams.update(
+        {
+            "text.usetex": True,
+            "font.family": "serif",
+            "axes.labelsize": 18,
+            "axes.titlesize": 18,
+            "xtick.labelsize": 15,
+            "ytick.labelsize": 15,
+            "legend.fontsize": 13,
+        }
+    )
+
+
 def load_results(csv_path: Path) -> tuple[list[float], list[float], list[float]]:
     volume_fraction: list[float] = []
     n_particles: list[float] = []
@@ -40,6 +54,7 @@ def main() -> None:
     csv_path = result_dir / "results.csv"
     output_path = result_dir / "residual3_contour.pdf"
 
+    configure_plot_style()
     volume_fraction, n_particles, residual3 = load_results(csv_path)
     log_volume_fraction = np.log10(np.asarray(volume_fraction))
     n_particles_array = np.asarray(n_particles)
@@ -82,12 +97,14 @@ def main() -> None:
     tick_positions = list(range(tick_min, tick_max + 1))
 
     ax.set_xticks(tick_positions)
-    ax.set_xticklabels([f"$10^{{{tick}}}$" for tick in tick_positions])
-    ax.set_xlabel("Volume Fraction")
-    ax.set_ylabel("nParticles")
-    ax.set_title("|| M^-1 - (I9 - K + K^2)|| Isolines")
+    ax.set_xticklabels([rf"$10^{{{tick}}}$" for tick in tick_positions])
+    ax.set_xlabel(r"Volume fraction")
+    ax.set_ylabel(r"$n_{\mathrm{Particles}}$")
+    ax.set_title(r"$\|M^{-1} - (I - K + K^2)\|$ isolines")
     ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
-    fig.colorbar(filled_contour, ax=ax, label="residual")
+    colorbar = fig.colorbar(filled_contour, ax=ax)
+    colorbar.set_label(r"Residual", fontsize=18)
+    colorbar.ax.tick_params(labelsize=15)
 
     fig.tight_layout()
     fig.savefig(output_path)

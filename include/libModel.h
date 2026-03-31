@@ -17,10 +17,17 @@ struct ModelResult {
     double residual5;
 };
 
+struct KSpectralNormResult {
+    double volumeFraction;
+    double spectralNorm;
+};
+
 ModelResult runModel(std::size_t nParticles, double r, double particleDiameter);
 void measureCPUtime(std::size_t nParticles, double r, double particleDiameter);
 DenseMatrix createPairwiseModel(const std::vector<Vec3>& positions);
 void testModel(std::size_t nParticles, double r, double particleDiameter);
 DenseMatrix createPairwiseModelTargetParticleOnly(const std::vector<Vec3>& positions);
+KSpectralNormResult getKSpectralNorm(std::size_t nParticles, double r, double particleDiameter);
+void doSpectralNormStudy(std::size_t nParticles, double particleDiameter);
 
 #endif

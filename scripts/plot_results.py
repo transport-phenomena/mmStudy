@@ -13,6 +13,21 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+
+def configure_plot_style() -> None:
+    plt.rcParams.update(
+        {
+            "text.usetex": True,
+            "font.family": "serif",
+            "axes.labelsize": 18,
+            "axes.titlesize": 18,
+            "xtick.labelsize": 15,
+            "ytick.labelsize": 15,
+            "legend.fontsize": 13,
+        }
+    )
+
+
 def load_results(csv_path: Path) -> dict[str, list[float]]:
     columns = {
         "volumeFraction": [],
@@ -40,20 +55,20 @@ def main() -> None:
     csv_path = RESULT_DIR / "results.csv"
     pdf_path = RESULT_DIR / "results_plot.pdf"
 
+    configure_plot_style()
     data = load_results(csv_path)
 
     fig, ax = plt.subplots(figsize=(8, 5.5))
-    ax.scatter(data["volumeFraction"], data["residualPair"], s=12, label="|| M^-1 - PRM ||")
-    ax.scatter(data["volumeFraction"], data["residual2"], s=12, label="|| M^-1 - (I - K)||")
-    ax.scatter(data["volumeFraction"], data["residual3"], s=12, label="|| M^-1 - (I - K + K^2)||")
-    ax.scatter(data["volumeFraction"], data["residual4"], s=12, label="|| M^-1 - (I - K + K^2 - K^3)||")
-    ax.scatter(data["volumeFraction"], data["residual5"], s=12, label="|| M^-1 - (I - K + K^2 - K^3 + K^4)||")
+    ax.scatter(data["volumeFraction"], data["residualPair"], s=12, label=r"$\|M^{-1} - \mathrm{PRM}\|$")
+    ax.scatter(data["volumeFraction"], data["residual2"], s=12, label=r"$\|M^{-1} - (I - K)\|$")
+    ax.scatter(data["volumeFraction"], data["residual3"], s=12, label=r"$\|M^{-1} - (I - K + K^2)\|$")
+    ax.scatter(data["volumeFraction"], data["residual4"], s=12, label=r"$\|M^{-1} - (I - K + K^2 - K^3)\|$")
+    ax.scatter(data["volumeFraction"], data["residual5"], s=12, label=r"$\|M^{-1} - (I - K + K^2 - K^3 + K^4)\|$")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Volume fraction")
-    ax.set_ylabel("Residual norm")
-   # ax.set_title("Residuals vs Volume Fraction")
+    ax.set_xlabel(r"Volume fraction")
+    ax.set_ylabel(r"Residual norm")
     ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
     ax.legend()
 

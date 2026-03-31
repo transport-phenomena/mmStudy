@@ -96,6 +96,16 @@ DenseMatrix DenseMatrix::multiply(const DenseMatrix& other) const {
     return DenseMatrix(matrix_ * other.matrix_);
 }
 
+double DenseMatrix::spectralNorm() const {
+    if (matrix_.size() == 0) {
+        return 0.0;
+    }
+
+    const Eigen::JacobiSVD<MatrixType> svd(matrix_, Eigen::ComputeThinU |
+                                                        Eigen::ComputeThinV);
+    return svd.singularValues()(0);
+}
+
 std::size_t DenseMatrix::size() const {
     return static_cast<std::size_t>(matrix_.rows());
 }

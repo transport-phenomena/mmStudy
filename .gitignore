@@ -8,4 +8,5 @@
 
 # Local plotting caches and generated artifacts
 /results/*
-
+/scripts/.mplconfig
+/scripts/__pycache__
