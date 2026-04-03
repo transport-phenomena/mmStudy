@@ -22,12 +22,20 @@ struct KSpectralNormResult {
     double spectralNorm;
 };
 
+struct KSpectralRadiusResult {
+    double volumeFraction;
+    double spectralRadius;
+};
+
 ModelResult runModel(std::size_t nParticles, double r, double particleDiameter);
 void measureCPUtime(std::size_t nParticles, double r, double particleDiameter);
 DenseMatrix createPairwiseModel(const std::vector<Vec3>& positions);
 void testModel(std::size_t nParticles, double r, double particleDiameter);
 DenseMatrix createPairwiseModelTargetParticleOnly(const std::vector<Vec3>& positions);
 KSpectralNormResult getKSpectralNorm(std::size_t nParticles, double r, double particleDiameter);
+KSpectralRadiusResult getKSpectralRadius(std::size_t nParticles, double r, double particleDiameter);
 void doSpectralNormStudy(std::size_t nParticles, double particleDiameter);
+void doSpectralRadiusStudy(std::size_t nParticles, double particleDiameter);
+void doAccuracyStudy(double particleDiameter);
 
 #endif

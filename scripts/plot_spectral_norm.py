@@ -49,17 +49,17 @@ def load_results(csv_path: Path) -> tuple[list[float], list[float]]:
 
 def main() -> None:
     csv_path = RESULT_DIR / "spectralNorm_2.csv"
-    output_path = RESULT_DIR / "spectralNorm_plot.pdf"
+    output_path = RESULT_DIR / "spectralRadius_plot.pdf"
 
     configure_plot_style()
     volume_fraction, spectral_norm = load_results(csv_path)
 
-    fig, ax = plt.subplots(figsize=(8, 5.5))
+    fig, ax = plt.subplots(figsize=(5.8, 5.8))
     ax.scatter(volume_fraction, spectral_norm, s=12)
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel(r"Volume fraction")
-    ax.set_ylabel(r"Spectral norm")
+    ax.set_xlabel(r"Volume fraction, $\phi$")
+    ax.set_ylabel(r"Spectral radius, $\rho(K)$")
     ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
 
     fig.tight_layout()

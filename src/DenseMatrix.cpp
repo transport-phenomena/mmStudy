@@ -106,6 +106,24 @@ double DenseMatrix::spectralNorm() const {
     return svd.singularValues()(0);
 }
 
+double DenseMatrix::spectralRadius() const {
+    if (matrix_.size() == 0) {
+        return 0.0;
+    }
+
+    if (matrix_.rows() != matrix_.cols()) {
+        throw std::invalid_argument(
+            "Cannot compute spectral radius of a non-square matrix.");
+    }
+
+    const Eigen::EigenSolver<MatrixType> eigenSolver(matrix_, false);
+    if (eigenSolver.info() != Eigen::Success) {
+        throw std::runtime_error("Eigenvalue computation failed.");
+    }
+
+    return eigenSolver.eigenvalues().cwiseAbs().maxCoeff();
+}
+
 std::size_t DenseMatrix::size() const {
     return static_cast<std::size_t>(matrix_.rows());
 }

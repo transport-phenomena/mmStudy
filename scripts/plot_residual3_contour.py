@@ -67,7 +67,7 @@ def main() -> None:
         12,
     )
 
-    fig, ax = plt.subplots(figsize=(8, 5.5))
+    fig, ax = plt.subplots(figsize=(5.8, 5.8))
     filled_contour = ax.tricontourf(
         triangulation,
         residual3_array,

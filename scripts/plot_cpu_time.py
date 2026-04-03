@@ -59,7 +59,7 @@ def plot_ratios(csv_path: Path, output_path: Path, show: bool) -> None:
     configure_plot_style()
     x_values, labels, series = read_cpu_time(csv_path)
 
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(5.8, 5.8))
 
     for label, y_values in zip(labels, series):
         ax.plot(x_values, y_values, marker="o", linewidth=1.8, label=label)

@@ -252,11 +252,11 @@ def plot_dataset_with_fit(csv_path: Path, output_path: Path) -> None:
     exponent, coefficient = fit_power_law(x_values, y_values)
     x_line, y_line = build_fit_curve(x_values, exponent, coefficient)
 
-    fig, ax = plt.subplots(figsize=(8, 5.5))
+    fig, ax = plt.subplots(figsize=(5.8, 5.8))
     ax.scatter(x_values, y_values, s=14, alpha=0.75)
     ax.plot(x_line, y_line, color="crimson", linewidth=2.0)
-    ax.set_xlabel(r"Volume fraction")
-    ax.set_ylabel(r"Spectral norm")
+    ax.set_xlabel(r"Volume fraction, $\phi$")
+    ax.set_ylabel(r"Spectral radius, $\rho(\mathbf{K})$")
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
@@ -327,6 +327,9 @@ def main() -> None:
         intersection_x_values,
         intersections,
     )
+    power_law_label = (
+        rf"$\varphi_{{\rho(\mathbf{{K}})=1}} = {power_coefficient:.2f}\cdot N^{{{power_exponent:.2f}}}$"
+    )
     fit_candidates.append(
         (
             "power_law",
@@ -393,7 +396,7 @@ def main() -> None:
                 ]
             )
 
-    fig, ax = plt.subplots(figsize=(8, 5.5))
+    fig, ax = plt.subplots(figsize=(5.8, 5.8))
     ax.scatter(particle_counts, intersections, s=24, alpha=0.8)
     if best_model_name == "power_law":
         fit_particle_counts, fit_intersections = build_fit_curve(
@@ -415,15 +418,25 @@ def main() -> None:
         )
 
     ax.plot(fit_particle_counts, fit_intersections, color="crimson", linewidth=2.0)
-    ax.set_xlabel(r"Number of particles")
-    ax.set_ylabel(r"Volume fraction at spectral norm $= 1$")
+    ax.set_xlabel(r"Number of particles, N")
+    ax.set_ylabel(r"Volume fraction, $\varphi$, at $\rho(\mathbf{K}) = 1$")
     ax.set_yscale("log")
+    ax.text(
+        0.5,
+        0.97,
+        power_law_label,
+        transform=ax.transAxes,
+        fontsize=20,
+        ha="center",
+        va="top",
+        bbox={"facecolor": "white", "alpha": 0.85, "edgecolor": "none", "pad": 4.0},
+    )
     ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.6)
     fig.tight_layout()
     fig.savefig(plot_path)
     plt.close(fig)
 
-    fig, ax = plt.subplots(figsize=(8, 5.5))
+    fig, ax = plt.subplots(figsize=(5.8, 5.8))
     colors = list(plt.cm.tab20.colors)
     for index, (x_values, exponent, coefficient) in enumerate(fitted_lines):
         x_line, y_line = build_fit_curve(x_values, exponent, coefficient)
@@ -435,8 +448,8 @@ def main() -> None:
             alpha=0.9,
         )
 
-    ax.set_xlabel(r"Volume fraction")
-    ax.set_ylabel(r"Spectral norm")
+    ax.set_xlabel(r"Volume fraction, $\varphi$")
+    ax.set_ylabel(r"Spectral radius, $\rho(\mathbf{K})$")
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)

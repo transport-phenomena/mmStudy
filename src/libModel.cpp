@@ -90,11 +90,79 @@ void doSpectralNormStudy(std::size_t nParticles, double particleDiameter) {
     }
 }
 
+
+void doAccuracyStudy(double particleDiameter) {
+
+    const char* resultsOutputPath = "results/results.csv";
+    std::ofstream resultsFile(resultsOutputPath);
+    if (!resultsFile) {
+        std::cerr << "Failed to open " << resultsOutputPath << " for writing."
+                  << std::endl;
+        return;
+    }
+
+    resultsFile << "nParticles,r,volumeFraction,residualPair,residual1,residual2,residual3,residual4,"
+                   "residual5\n";
+
+    for (std::size_t nParticles = 50; nParticles <= 50; ++nParticles) {
+        for (std::size_t i = 0; i <= 6000; i++) {
+            double r = 10.0 + static_cast<double>(i) / 10.0;
+            const ModelResult result =
+                runModel(nParticles, r, particleDiameter);
+
+            resultsFile << nParticles << "," << r << ","
+                        << result.volumeFraction << ","
+                        << result.residualPair << "," << result.residual1
+                        << "," << result.residual2 << ","
+                        << result.residual3 << "," << result.residual4
+                        << "," << result.residual5 << "\n";
+        }
+    }
+
+    std::cout << "Wrote results to " << resultsOutputPath << std::endl;
+
+}
+
+
+void doSpectralRadiusStudy(std::size_t nParticles, double particleDiameter) {
+    
+    const std::string spectralRadiusOutputPath =
+        "results/spectralRadius_" + std::to_string(nParticles) + ".csv";
+    std::ofstream spectralRadiusFile(spectralRadiusOutputPath);
+    
+    spectralRadiusFile << "nParticles,r,volumeFraction,spectralRadius\n";
+    for (std::size_t i = 0; i <= 6000; i++) {
+        double r = 10.0 + static_cast<double>(i) / 10.0;
+        const KSpectralRadiusResult result =
+            getKSpectralRadius(nParticles, r, particleDiameter);
+        spectralRadiusFile << nParticles << "," << r << ","
+                           << result.volumeFraction << ","
+                           << result.spectralRadius << "\n"; 
+
+    }
+}
+
 void testModel(std::size_t nParticles, double r, double particleDiameter) {
     Particles particles(nParticles, r, particleDiameter);
     DenseMatrix m = createPairwiseModel(particles.xyz);
     std::cout << m << std::endl;
 }
+
+KSpectralRadiusResult getKSpectralRadius(std::size_t nParticles, double r, double particleDiameter) {
+    const std::size_t n = 3 * nParticles;
+    Particles particles(nParticles, r, particleDiameter);
+    DenseMatrix mobilityMatrix(n);
+    mobilityMatrix.getMobilityMatrix(particles.xyz);
+    DenseMatrix Id = DenseMatrix::identity(n);
+    DenseMatrix K = mobilityMatrix.substract(Id);
+    const double sr = K.spectralRadius();
+    //const double sn = K.spectralNorm();
+    //std::cout << "nParticles: " << nParticles << ", r: " << r << ", volume fraction: " << particles.getVolumeFraction() << ", spectral radius: " << sr << ", spectral norm: " << sn << std::endl;
+    const double vf = particles.getVolumeFraction();
+
+    return {vf, sr};
+}
+
 
 KSpectralNormResult getKSpectralNorm(std::size_t nParticles, double r, double particleDiameter) {
     const std::size_t n = 3 * nParticles;
@@ -123,16 +191,16 @@ ModelResult runModel(std::size_t nParticles, double r, double particleDiameter) 
         DenseMatrix resistanceMatrix = mobilityMatrix.invert();
 
         DenseMatrix Id = DenseMatrix::identity(n);
-        DenseMatrix K = Id.substract(mobilityMatrix); //mobilityMatrix.substract(Id);
+        DenseMatrix K =  Id.substract(mobilityMatrix); // mobilityMatrix.substract(Id);
         DenseMatrix K2 = K.multiply(K);
         DenseMatrix K3 = K2.multiply(K);
         DenseMatrix K4 = K3.multiply(K);
 
         DenseMatrix rmAprox1 = Id;
         DenseMatrix rmAproxPair = createPairwiseModel(particles.xyz);
-        DenseMatrix rmAprox2 = Id.substract(K);
+        DenseMatrix rmAprox2 = Id.add(K);
         DenseMatrix rmAprox3 = rmAprox2.add(K2);
-        DenseMatrix rmAprox4 = rmAprox3.substract(K3);
+        DenseMatrix rmAprox4 = rmAprox3.add(K3);
         DenseMatrix rmAprox5 = rmAprox4.add(K4);
 
         DenseMatrix residualPair = resistanceMatrix.substract(rmAproxPair);
