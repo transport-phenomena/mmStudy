@@ -6,6 +6,66 @@
 #include <ctime>
 #include <fstream>
 #include <string>
+#include <cmath>
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <cstdlib>
+#include <iomanip>
+
+// Helper function to run ANN inference via Python script
+std::vector<std::vector<double>> runANNInference(double phi, std::size_t nParticles) {
+    std::ostringstream jsonInput;
+    jsonInput << std::fixed << std::setprecision(6) 
+              << "{\"phi\": " << phi << ", \"nParticles\": " << nParticles << "}";
+    
+    // Run Python inference script
+    FILE* pipe = popen(("echo '" + jsonInput.str() + "' | python3 scripts/ann_inference.py").c_str(), "r");
+    if (!pipe) {
+        std::cerr << "  [ERROR] Failed to run ANN inference script" << std::endl;
+        return {};
+    }
+    
+    // Read JSON output
+    char buffer[16384];
+    std::string output;
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        output += buffer;
+    }
+    pclose(pipe);
+    
+    // Simple JSON parsing for nested array [[...],[...],[...]]
+    std::vector<std::vector<double>> result;
+    result.resize(3);
+    
+    int row = 0;
+    std::string current_value;
+    
+    for (size_t i = 0; i < output.length() && row < 3; ++i) {
+        char c = output[i];
+        
+        if (c == '[') {
+            current_value.clear();
+        } else if (c == ',' || c == ']') {
+            if (!current_value.empty()) {
+                try {
+                    double val = std::stod(current_value);
+                    result[row].push_back(val);
+                    current_value.clear();
+                } catch (...) {
+                    current_value.clear();
+                }
+            }
+            if (c == ']' && current_value.empty()) {
+                row++;
+            }
+        } else if (c != ' ' && c != '\n' && c != '\r' && c != '\t') {
+            current_value += c;
+        }
+    }
+    
+    return result;
+}
 
 DenseMatrix createPairwiseModel(const std::vector<Vec3>& positions) {
     const std::size_t particleCount = positions.size();
@@ -92,20 +152,31 @@ void doSpectralNormStudy(std::size_t nParticles, double particleDiameter) {
 
 
 void doAccuracyStudy(double particleDiameter) {
+    std::cout << "\n=== Starting Accuracy Study ===" << std::endl;
+    std::cout << "Particle diameter: " << particleDiameter << std::endl;
 
     const char* resultsOutputPath = "results/results.csv";
     std::ofstream resultsFile(resultsOutputPath);
     if (!resultsFile) {
-        std::cerr << "Failed to open " << resultsOutputPath << " for writing."
+        std::cerr << "[ERROR] Failed to open " << resultsOutputPath << " for writing."
                   << std::endl;
         return;
     }
+    std::cout << "Output file: " << resultsOutputPath << std::endl;
 
     resultsFile << "nParticles,r,volumeFraction,residualPair,residual1,residual2,residual3,residual4,"
-                   "residual5\n";
+                   "residual5,residualANN\n";
+
+    std::clock_t startTime = std::clock();
 
     for (std::size_t nParticles = 50; nParticles <= 50; ++nParticles) {
-        for (std::size_t i = 0; i <= 6000; i++) {
+        std::cout << "Processing nParticles = " << nParticles  << std::endl;
+        int nConfigs = 100;
+        for (std::size_t i = 0; i <= nConfigs; i++) {
+            if (i % 20 == 0 && i > 0) {
+                              
+                std::cout << "  Progress: " << i << "/" << nConfigs << " configs " << "of " << nParticles << std::endl;
+            }
             double r = 10.0 + static_cast<double>(i) / 10.0;
             const ModelResult result =
                 runModel(nParticles, r, particleDiameter);
@@ -115,11 +186,17 @@ void doAccuracyStudy(double particleDiameter) {
                         << result.residualPair << "," << result.residual1
                         << "," << result.residual2 << ","
                         << result.residual3 << "," << result.residual4
-                        << "," << result.residual5 << "\n";
+                        << "," << result.residual5 << "," << result.residualANN << "\n";
         }
+        std::cout << "  Completed: 6000/6000 configs processed" << std::endl;
     }
 
-    std::cout << "Wrote results to " << resultsOutputPath << std::endl;
+    std::clock_t endTime = std::clock();
+    double totalTime = static_cast<double>(endTime - startTime) / CLOCKS_PER_SEC;
+    
+    std::cout << "\n=== Accuracy Study Complete ===" << std::endl;
+    std::cout << "Total time: " << std::fixed << std::setprecision(2) << totalTime << " seconds" << std::endl;
+    std::cout << "Results written to " << resultsOutputPath << std::endl;
 
 }
 
@@ -181,7 +258,7 @@ ModelResult runModel(std::size_t nParticles, double r, double particleDiameter) 
     const std::size_t n = 3 * nParticles;
     constexpr std::size_t nRuns = 1;
 
-    ModelResult averageResult{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    ModelResult averageResult{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     for (std::size_t run = 0; run < nRuns; ++run) {
         Particles particles(nParticles, r, particleDiameter);
@@ -198,6 +275,24 @@ ModelResult runModel(std::size_t nParticles, double r, double particleDiameter) 
 
         DenseMatrix rmAprox1 = Id;
         DenseMatrix rmAproxPair = createPairwiseModel(particles.xyz);
+
+        // ANN augmented calculation via Python inference
+        double phi = particles.getVolumeFraction();
+        auto dR = runANNInference(phi, nParticles);
+        
+        if (dR.empty()) {
+            std::cerr << "  [WARNING] ANN inference returned empty result at phi=" << phi 
+                      << ", nParticles=" << nParticles << std::endl;
+        }
+        
+        DenseMatrix correction(n);
+        for (std::size_t i = 0; i < 3 && i < dR.size(); ++i) {
+            for (std::size_t j = 0; j < dR[i].size() && j < static_cast<std::size_t>(n); ++j) {
+                correction(i, j) = dR[i][j];
+            }
+        }
+
+        DenseMatrix rmAproxANN = rmAproxPair.add(correction);
         DenseMatrix rmAprox2 = Id.add(K);
         DenseMatrix rmAprox3 = rmAprox2.add(K2);
         DenseMatrix rmAprox4 = rmAprox3.add(K3);
@@ -217,6 +312,9 @@ ModelResult runModel(std::size_t nParticles, double r, double particleDiameter) 
         averageResult.residual3 += residual3.matrix().norm();
         averageResult.residual4 += residual4.matrix().norm();
         averageResult.residual5 += residual5.matrix().norm();
+
+        DenseMatrix residualANN = resistanceMatrix.substract(rmAproxANN);
+        averageResult.residualANN += residualANN.matrix().norm();
     }
 
     const double normalization = 1.0 / static_cast<double>(nRuns);
@@ -227,6 +325,7 @@ ModelResult runModel(std::size_t nParticles, double r, double particleDiameter) 
     averageResult.residual3 *= normalization;
     averageResult.residual4 *= normalization;
     averageResult.residual5 *= normalization;
+    averageResult.residualANN *= normalization;
 
     return averageResult;
 }

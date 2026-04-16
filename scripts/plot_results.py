@@ -37,6 +37,7 @@ def load_results(csv_path: Path) -> dict[str, list[float]]:
         "residual3": [],
         "residual4": [],
         "residual5": [],
+        "residualANN": [],
     }
 
     with csv_path.open(newline="") as csv_file:
@@ -49,6 +50,7 @@ def load_results(csv_path: Path) -> dict[str, list[float]]:
             columns["residual3"].append(float(row["residual3"]))
             columns["residual4"].append(float(row["residual4"]))
             columns["residual5"].append(float(row["residual5"]))
+            columns["residualANN"].append(float(row["residualANN"]))
 
     return columns
 
@@ -86,6 +88,7 @@ def main() -> None:
     ax.scatter(data["volumeFraction"], data["residual3"], s=12, label=r"$\|M^{-1} - (I + K + K^2)\|$")
     ax.scatter(data["volumeFraction"], data["residual4"], s=12, label=r"$\|M^{-1} - (I + K + K^2 + K^3)\|$")
     ax.scatter(data["volumeFraction"], data["residual5"], s=12, label=r"$\|M^{-1} - (I + K + K^2 + K^3 + K^4)\|$")
+    ax.scatter(data["volumeFraction"], data["residualANN"], s=12, label=r"$\|M^{-1} - \mathrm{ANN}\|$")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -129,20 +132,27 @@ def main() -> None:
         s=12,
         label=r"$\|\mathbf{M}^{-1} - (\mathbf{I} + \mathbf{K} + \mathbf{K}^2 + \mathbf{K}^3 + \mathbf{K}^4)\|_F$",
     )
+    ax.scatter(
+        apply_mask(data["volumeFraction"], threshold_mask),
+        apply_mask(data["residualANN"], threshold_mask),
+        s=12,
+        label=r"$\|\mathbf{M}^{-1} - \mathrm{ANN}\|_F$",
+    )
 
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlabel(r"Volume fraction, $\varphi$")
-    ax.set_ylabel(r"Frobenius norm of the residual")
-    ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
-    ax.legend()
 
-    fig.tight_layout()
-    fig.savefig(filtered_pdf_path)
-    plt.close(fig)
+    #ax.set_xscale("log")
+    #ax.set_yscale("log")
+    #ax.set_xlabel(r"Volume fraction, $\varphi$")
+    #ax.set_ylabel(r"Frobenius norm of the residual")
+    #ax.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.6)
+    #ax.legend()
+#
+    #fig.tight_layout()
+    #fig.savefig(filtered_pdf_path)
+    #plt.close(fig)
 
     print(f"Wrote plot to {pdf_path}")
-    print(f"Wrote thresholded plot to {filtered_pdf_path}")
+    #print(f"Wrote thresholded plot to {filtered_pdf_path}")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ BUILD ?= release
 
 WARNFLAGS := -Wall -Wextra -Wpedantic
 STD_FLAGS := -std=c++17
-CPPFLAGS := -I/opt/homebrew/include/eigen3 -Iinclude
+CPPFLAGS := -I/usr/include/eigen3 -Iinclude
 LDFLAGS :=
 LDLIBS :=
 

@@ -15,6 +15,7 @@ struct ModelResult {
     double residual3;
     double residual4;
     double residual5;
+    double residualANN;
 };
 
 struct KSpectralNormResult {
